@@ -83,12 +83,20 @@ void insertSourceInHeap(ManyToManyQueryHeap &heap, const PhantomNode &phantom_no
 {
     if (phantom_node.IsValidForwardSource())
     {
+        std::cout << "{\"node\": " << phantom_node.forward_segment_id.id
+            << ", \"weight\": " << -phantom_node.GetForwardWeightPlusOffset()
+            << ", \"parent\": " << phantom_node.forward_segment_id.id
+            << ", \"duration\": " << -phantom_node.GetForwardDuration() << "},\n";
         heap.Insert(phantom_node.forward_segment_id.id,
                     -phantom_node.GetForwardWeightPlusOffset(),
                     {phantom_node.forward_segment_id.id, -phantom_node.GetForwardDuration()});
     }
     if (phantom_node.IsValidReverseSource())
     {
+        std::cout << "{\"node\": " << phantom_node.reverse_segment_id.id
+            << ", \"weight\": " << -phantom_node.GetReverseWeightPlusOffset()
+            << ", \"parent\": " << phantom_node.reverse_segment_id.id
+            << ", \"duration\": " << -phantom_node.GetReverseDuration() << "}\n";
         heap.Insert(phantom_node.reverse_segment_id.id,
                     -phantom_node.GetReverseWeightPlusOffset(),
                     {phantom_node.reverse_segment_id.id, -phantom_node.GetReverseDuration()});
@@ -100,12 +108,20 @@ void insertTargetInHeap(ManyToManyQueryHeap &heap, const PhantomNode &phantom_no
 {
     if (phantom_node.IsValidForwardTarget())
     {
+        std::cout << "{\"node\": " << phantom_node.forward_segment_id.id
+            << ", \"weight\": " << -phantom_node.GetForwardWeightPlusOffset()
+            << ", \"parent\": " << phantom_node.forward_segment_id.id
+            << ", \"duration\": " << phantom_node.GetForwardDuration() << "},\n";
         heap.Insert(phantom_node.forward_segment_id.id,
                     phantom_node.GetForwardWeightPlusOffset(),
                     {phantom_node.forward_segment_id.id, phantom_node.GetForwardDuration()});
     }
     if (phantom_node.IsValidReverseTarget())
     {
+        std::cout << "{\"node\": " << phantom_node.reverse_segment_id.id
+            << ", \"weight\": " << phantom_node.GetReverseWeightPlusOffset()
+            << ", \"parent\": " << phantom_node.reverse_segment_id.id
+            << ", \"duration\": " << phantom_node.GetReverseDuration() << "},\n";
         heap.Insert(phantom_node.reverse_segment_id.id,
                     phantom_node.GetReverseWeightPlusOffset(),
                     {phantom_node.reverse_segment_id.id, phantom_node.GetReverseDuration()});

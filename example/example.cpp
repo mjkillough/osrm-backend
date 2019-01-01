@@ -11,10 +11,12 @@
 #include "osrm/osrm.hpp"
 #include "osrm/status.hpp"
 
+#include <chrono>
 #include <exception>
 #include <iostream>
 #include <string>
 #include <utility>
+#include <random>
 
 #include <cstdlib>
 
@@ -38,43 +40,61 @@ int main(int argc, const char *argv[])
     // - Contraction Hierarchies (CH): requires extract+contract pre-processing
     // - Multi-Level Dijkstra (MLD): requires extract+partition+customize pre-processing
     //
-    // config.algorithm = EngineConfig::Algorithm::CH;
-    config.algorithm = EngineConfig::Algorithm::MLD;
+    config.algorithm = EngineConfig::Algorithm::CH;
+    // config.algorithm = EngineConfig::Algorithm::MLD;
+
 
     // Routing machine with several services (such as Route, Table, Nearest, Trip, Match)
     const OSRM osrm{config};
 
-    // The following shows how to use the Route service; configure this service
-    RouteParameters params;
+    TableParameters params;
 
-    // Route in monaco
-    params.coordinates.push_back({util::FloatLongitude{7.419758}, util::FloatLatitude{43.731142}});
-    params.coordinates.push_back({util::FloatLongitude{7.419505}, util::FloatLatitude{43.736825}});
+    auto generator = std::default_random_engine{}; // NOTE: not random!
+    // Random square in London:
+    auto latitude_distribution = std::uniform_real_distribution<double>{51.5062628,51.5293873};
+    auto longitude_distribution = std::uniform_real_distribution<double>{-0.124899,-0.0996648};
+
+
+    auto num_sources = 1000;
+    auto num_targets = 1000;
+    for (auto i = 0; i < num_sources + num_targets; i++) {
+        auto latitude = latitude_distribution(generator);
+        auto longitude = longitude_distribution(generator);
+
+        params.coordinates.push_back({
+            util::FloatLongitude{longitude},
+            util::FloatLatitude{latitude},
+        });
+    }
+
+    for (auto i = 0; i < num_sources; i++) {
+        params.sources.push_back(i);
+    }
+    for (auto i = 0; i < num_targets; i++) {
+        params.destinations.push_back(num_sources + i);
+    }
 
     // Response is in JSON format
     json::Object result;
 
     // Execute routing request, this does the heavy lifting
-    const auto status = osrm.Route(params, result);
+    auto start = std::chrono::steady_clock::now();
+    auto status = osrm.Table(params, result);
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Execution duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms\n";
+
+    std::cout << "[\n";
+    for (auto row : result.values["durations"].get<json::Array>().values) {
+        std::cout << "\t[\n\t\t";
+        for (auto val : row.get<json::Array>().values) {
+            std::cout << val.get<json::Number>().value << ", ";
+        }
+        std::cout << "\n\t]\n";
+    }
+    std::cout << "]\n";
 
     if (status == Status::Ok)
     {
-        auto &routes = result.values["routes"].get<json::Array>();
-
-        // Let's just use the first route
-        auto &route = routes.values.at(0).get<json::Object>();
-        const auto distance = route.values["distance"].get<json::Number>().value;
-        const auto duration = route.values["duration"].get<json::Number>().value;
-
-        // Warn users if extract does not contain the default coordinates from above
-        if (distance == 0 || duration == 0)
-        {
-            std::cout << "Note: distance or duration is zero. ";
-            std::cout << "You are probably doing a query outside of the OSM extract.\n\n";
-        }
-
-        std::cout << "Distance: " << distance << " meter\n";
-        std::cout << "Duration: " << duration << " seconds\n";
         return EXIT_SUCCESS;
     }
     else if (status == Status::Error)

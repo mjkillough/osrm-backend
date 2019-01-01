@@ -336,6 +336,8 @@ manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,
 
     std::vector<NodeBucket> search_space_with_buckets;
 
+    std::cout << "target queries\n";
+
     // Populate buckets with paths from all accessible nodes to destinations via backward searches
     for (std::uint32_t column_index = 0; column_index < target_indices.size(); ++column_index)
     {
@@ -357,6 +359,8 @@ manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,
 
     // Order lookup buckets
     std::sort(search_space_with_buckets.begin(), search_space_with_buckets.end());
+
+    std::cout << "source queries\n";
 
     // Find shortest paths from sources to all accessible nodes
     for (std::uint32_t row_index = 0; row_index < source_indices.size(); ++row_index)
